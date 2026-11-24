@@ -12,6 +12,7 @@ import { state } from '../state';
 import { openAvatarEditor } from './avatarEditor';
 import { btn, confirmBox, h, icon, modal, toast } from './dom';
 import { openCatalogue, openPlay, togglePanel } from './panels';
+import { outcomeLabel, PERSONA_QUIZZES } from '../../../shared/personality';
 
 let overlay: HTMLElement;
 const bubbles = new Map<string, HTMLElement>(); // userId → stack element
@@ -323,9 +324,19 @@ export function openPlayerCard(userId: string, name: string) {
   const body = h('div', { class: 'stack player-card' });
   const m = modal(name, body);
   if (me) {
-    body.append(h('p', null, "That's you! Looking good."), btn([icon('shirt', 18), 'Change your look'], () => { m.close(); openAvatarEditor(); }, 'primary'));
+    const p = state.profile!;
+    const toggle = h('label', { class: 'row tight toggle' },
+      h('input', { type: 'checkbox', checked: p.traitsPublic, onchange: async (e: Event) => {
+        try { await net.request('persona.visibility', { public: (e.target as HTMLInputElement).checked }); }
+        catch (err) { toast((err as Error).message, 'warn'); }
+      } }),
+      h('span', null, 'Show my quiz results to visitors'));
+    body.append(h('p', null, "That's you! Looking good."), traitList(p.traits ?? {}),
+      Object.keys(p.traits ?? {}).length ? toggle : btn([icon('star', 18), 'Take a personality quiz'], () => { m.close(); openPlay('you'); }, 'ghost'),
+      btn([icon('shirt', 18), 'Change your look'], () => { m.close(); openAvatarEditor(); }, 'primary'));
     return;
   }
+  body.append(traitList(state.occupants.get(userId)?.traits ?? {}));
   const muted = state.muted.has(userId);
   const blocked = state.blocked.has(userId);
   body.append(
@@ -355,6 +366,14 @@ export function openPlayerCard(userId: string, name: string) {
       }), 'ghost warn-text') : null,
     ),
   );
+}
+
+/** A player's personality results as small chips, in catalogue order. */
+function traitList(traits: Record<string, string>): Node {
+  const shown = PERSONA_QUIZZES.filter((q) => traits[q.id]);
+  if (!shown.length) return document.createTextNode('');
+  return h('div', { class: 'trait-list' }, ...shown.map((q) => h('div', { class: 'trait-chip', style: { '--theme': q.colour } as any, title: q.outcomes[traits[q.id]]?.blurb ?? '' },
+    h('small', null, q.title), h('b', null, outcomeLabel(q.id, traits[q.id])))));
 }
 
 export function openReport(userId: string, name: string, message?: ChatMessage) {

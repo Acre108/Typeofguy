@@ -38,6 +38,10 @@ export interface Requests {
   'quiz.answer': [{ sessionId: string; index: number; choice: number },
     { correct: boolean; correctIndex: number; score: number; done: boolean; reward?: Reward }];
 
+  'persona.submit': [{ quizId: string; answers?: number[]; month?: number; day?: number },
+    { outcome: string; scores: Record<string, number>; reward: Reward }];
+  'persona.visibility': [{ public: boolean }, UserProfile];
+
   'memory.start': [{}, { sessionId: string; cards: number; cols: number; timeLimit: number; serverTime: number }];
   'memory.flip': [{ sessionId: string; index: number },
     { index: number; face: number; pair?: { other: number; otherFace: number; match: boolean };
@@ -80,6 +84,7 @@ export type ServerEvent =
   | { t: 'avatar.move'; userId: string; from: [number, number]; path: [number, number][]; start: number; sit?: { y: number; facing: number } }
   | { t: 'avatar.emote'; userId: string; kind: 'wave' | 'dance' | 'stand' }
   | { t: 'avatar.look'; userId: string; avatar: AvatarLook }
+  | { t: 'avatar.traits'; userId: string; traits: Record<string, string> }
   | { t: 'chat'; message: ChatMessage }
   | { t: 'guestbook.new'; post: GuestbookPost }
   | { t: 'guestbook.deleted'; postId: number; roomId: string }

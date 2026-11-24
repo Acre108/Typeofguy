@@ -9,6 +9,7 @@ export function toProfile(row: UserRow): UserProfile {
   return {
     id: row.id, username: row.username, avatar: d.avatar, tokens: d.tokens, inventory: d.inventory,
     materials: d.materials, collection: d.collection, bonuses: d.bonuses, apartmentId: d.apartmentId, isNew: d.isNew,
+    traits: d.traits ?? {}, traitsPublic: d.traitsPublic ?? true,
   };
 }
 

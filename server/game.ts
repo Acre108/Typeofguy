@@ -12,7 +12,7 @@ import { CHAT_MAX, GUESTBOOK_MAX, WALK_SPEED, type Op, type Requests, type RoomS
 import { SHAPES } from '../shared/rooms';
 import { validLook } from '../shared/avatar';
 import type { Access, ChatMessage, DirectoryEntry, Occupant, PlacedItem, RoomRecord, RoomShape, Rot } from '../shared/types';
-import { answerQuiz, endMemory, flipMemory, quizList, startMemory, startQuiz } from './activities';
+import { answerQuiz, endMemory, flipMemory, quizList, startMemory, startQuiz, submitPersona } from './activities';
 import { buy, takeItem, addItem, toProfile } from './economy';
 import { limits } from './ratelimit';
 import type { Store, UserRow } from './store';
@@ -154,6 +154,7 @@ export class Game {
       userId: o.userId, name: u?.username ?? '?', avatar: u!.data.avatar,
       x: pos.done ? pos.tile[0] : o.from[0], z: pos.done ? pos.tile[1] : o.from[1],
       path: pos.done ? [] : o.path, pathStart: o.start, facing: o.facing, state: o.state, sitY: o.sit?.y,
+      traits: u && (u.data.traitsPublic ?? true) ? u.data.traits ?? {} : {},
     };
   }
 
@@ -420,6 +421,22 @@ export class Game {
       return res;
     },
 
+    'persona.submit': (c, { quizId, answers, month, day }) => {
+      let res;
+      try { res = submitPersona(c.user.data, String(quizId), Array.isArray(answers) ? answers : undefined, month, day); }
+      catch (e) { return err((e as Error).message); }
+      this.saveUser(c);
+      this.broadcastTraits(c);
+      return res;
+    },
+
+    'persona.visibility': (c, p) => {
+      c.user.data.traitsPublic = !!p.public;
+      this.saveUser(c);
+      this.broadcastTraits(c);
+      return toProfile(c.user);
+    },
+
     'memory.start': (c) => startMemory(c.user.id),
     'memory.flip': (c, { sessionId, index }) => {
       let res;
@@ -571,6 +588,13 @@ export class Game {
       return { ok: true as const };
     },
   };
+
+  private broadcastTraits(c: Client) {
+    const room = c.roomId ? this.rooms.get(c.roomId) : null;
+    if (!room) return;
+    const traits = (c.user.data.traitsPublic ?? true) ? c.user.data.traits ?? {} : {};
+    this.broadcast(room, { t: 'avatar.traits', userId: c.user.id, traits });
+  }
 
   private eject(room: LiveRoom, target: Client, by: string) {
     this.bans.set(`${room.record.id}:${target.user.id}`, Date.now() + 10 * 60 * 1000);

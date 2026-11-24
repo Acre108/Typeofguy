@@ -202,3 +202,71 @@ test('memory game: server deals the cards and pays out on completion', () => {
   assert.ok(u.tokens >= 30);
   assert.throws(() => flipMemory(u, 'u2', s.sessionId, 0), /finished/);
 });
+
+// ---------------------------------------------------------------- personality quizzes
+import { PERSONA_QUIZZES, PERSONA_BY_ID, scorePersona, starSign } from '../shared/personality';
+import { submitPersona } from '../server/activities';
+
+test('fifteen personality quizzes, all well-formed and every result reachable', () => {
+  assert.equal(PERSONA_QUIZZES.length, 15);
+  assert.equal(new Set(PERSONA_QUIZZES.map((q) => q.id)).size, 15, 'unique ids');
+  for (const quiz of PERSONA_QUIZZES) {
+    if (quiz.kind === 'birthday') continue;
+    const keys = new Set(quiz.kind === 'axes' ? quiz.axes!.flat() : Object.keys(quiz.outcomes));
+    const reached = new Set<string>();
+    for (const q of quiz.questions) {
+      assert.ok(q.options.length >= 2 && q.options.length <= 5, `${quiz.id}: 2–5 options`);
+      for (const o of q.options) for (const [k, v] of Object.entries(o.s)) {
+        assert.ok(keys.has(k), `${quiz.id}: option scores unknown key ${k}`);
+        if (v > 0) reached.add(k);
+      }
+    }
+    for (const k of keys) assert.ok(reached.has(k), `${quiz.id}: ${k} can be scored`);
+    if (quiz.kind === 'axes') {
+      assert.equal(Object.keys(quiz.outcomes).length, 16);
+      // Odd number of questions per axis means no ties.
+      for (const [a, b] of quiz.axes!) {
+        const n = quiz.questions.filter((q) => q.options.some((o) => a in o.s || b in o.s)).length;
+        assert.equal(n % 2, 1, `${quiz.id}: ${a}/${b} has an odd question count`);
+      }
+    } else {
+      // Picking "the first option that scores k" all the way through should land on k.
+      for (const k of keys) {
+        const answers = quiz.questions.map((q) => {
+          const best = q.options.findIndex((o) => (o.s[k] ?? 0) > 0);
+          return best >= 0 ? best : q.options.findIndex((o) => !(k in o.s) || o.s[k] >= 0);
+        });
+        assert.equal(scorePersona(quiz, answers).outcome, k, `${quiz.id}: all-in on ${k}`);
+      }
+    }
+  }
+});
+
+test('four letters builds a type from each axis', () => {
+  const quiz = PERSONA_BY_ID['four-letters'];
+  assert.equal(scorePersona(quiz, quiz.questions.map(() => 0)).outcome, 'ESTJ');
+  assert.equal(scorePersona(quiz, quiz.questions.map(() => 1)).outcome, 'INFP');
+  assert.throws(() => scorePersona(quiz, [0, 1]), /every question/);
+  assert.throws(() => scorePersona(quiz, quiz.questions.map(() => 7)), /options/);
+});
+
+test('star signs, including the cusps', () => {
+  const cases: [number, number, string][] = [
+    [1, 1, 'capricorn'], [1, 19, 'capricorn'], [1, 20, 'aquarius'], [2, 29, 'pisces'], [3, 20, 'pisces'], [3, 21, 'aries'],
+    [6, 21, 'cancer'], [7, 23, 'leo'], [10, 31, 'scorpio'], [12, 21, 'sagittarius'], [12, 22, 'capricorn'], [12, 31, 'capricorn'],
+  ];
+  for (const [m, d, sign] of cases) assert.equal(starSign(m, d), sign, `${m}/${d}`);
+  assert.throws(() => starSign(2, 30));
+  assert.throws(() => starSign(13, 1));
+});
+
+test('personality rewards: generous first time, small after, and only the outcome is stored', () => {
+  const u = user(0);
+  const first = submitPersona(u, 'star-sign', undefined, 8, 1);
+  assert.equal(first.outcome, 'leo');
+  assert.equal(first.reward.tokens, 30);
+  const again = submitPersona(u, 'star-sign', undefined, 8, 1);
+  assert.equal(again.reward.tokens, 5);
+  assert.deepEqual(u.traits, { 'star-sign': 'leo' }, 'no birthday kept');
+  assert.throws(() => submitPersona(u, 'nope', []));
+});

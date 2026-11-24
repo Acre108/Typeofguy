@@ -189,6 +189,10 @@ export interface UserProfile {
   bonuses: string[];
   apartmentId: string;
   isNew: boolean;
+  /** Personality quiz results: quiz id → outcome key. */
+  traits: Record<string, string>;
+  /** Whether visitors can see those results on the player card. */
+  traitsPublic: boolean;
 }
 
 export type AvatarState = 'stand' | 'sit' | 'dance';
@@ -205,6 +209,8 @@ export interface Occupant {
   facing: number; // radians around y
   state: AvatarState;
   sitY?: number;
+  /** Personality results the player has chosen to show. */
+  traits?: Record<string, string>;
 }
 
 export interface ChatMessage {

@@ -58,6 +58,11 @@ function handle(ev: ServerEvent) {
       state.emit('look', { userId: ev.userId, avatar: ev.avatar });
       break;
     }
+    case 'avatar.traits': {
+      const o = state.occupants.get(ev.userId);
+      if (o) o.traits = ev.traits;
+      break;
+    }
     case 'chat': state.addChat(ev.message); break;
     case 'guestbook.new': state.emit('guestbook', { kind: 'new', post: ev.post }); break;
     case 'guestbook.deleted': state.emit('guestbook', { kind: 'deleted', postId: ev.postId }); break;

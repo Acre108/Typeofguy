@@ -2,6 +2,7 @@
 // answers and the card layout, so the client can only report choices, never scores.
 
 import { randomUUID } from 'node:crypto';
+import { PERSONA_BY_ID, PERSONA_FIRST_REWARD, PERSONA_REPEAT_REWARD, scorePersona, starSign } from '../shared/personality';
 import type { QuizMeta, QuizQuestionPublic, Reward } from '../shared/types';
 import { QUIZ_BY_ID, QUIZZES, type QuizQuestion } from './data/quizzes';
 import { diminishing, grant } from './economy';
@@ -66,6 +67,27 @@ export function answerQuiz(user: UserData, userId: string, sessionId: string, in
     reward = grant(user, { tokens, items, materials, label: `${band.label} — ${s.score}/${s.questions.length}`, multiplier: mult });
   }
   return { correct, correctIndex: q.answer, score: s.score, done, reward };
+}
+
+// ================================================================ personality quizzes
+
+/** Score a personality quiz (or read a star sign) and pay out: generously the first time, a token amount after. */
+export function submitPersona(user: UserData, quizId: string, answers?: number[], month?: number, day?: number) {
+  const quiz = PERSONA_BY_ID[quizId];
+  if (!quiz) throw new Error('Unknown quiz');
+  const result = quiz.kind === 'birthday'
+    ? { outcome: starSign(Number(month), Number(day)), scores: {} }
+    : scorePersona(quiz, (answers ?? []).map(Number));
+  user.traits ??= {};
+  const first = !(quizId in user.traits);
+  user.traits[quizId] = result.outcome;
+  const mult = first ? 1 : diminishing(user, `persona:${quizId}`);
+  const reward = grant(user, {
+    tokens: first ? PERSONA_FIRST_REWARD : PERSONA_REPEAT_REWARD * mult,
+    label: first ? 'Result added to your player card' : 'Result updated',
+    multiplier: mult,
+  });
+  return { ...result, reward };
 }
 
 // ================================================================ Tide Pool Pairs (memory)

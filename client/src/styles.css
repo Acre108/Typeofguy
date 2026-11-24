@@ -358,6 +358,26 @@ body.editing .bottom .chatbar { display: none; }
 .form-error { color: #b7533f; min-height: 1.2em; font-size: 0.9rem; }
 .small-print { font-size: 0.78rem; color: var(--muted); text-align: center; }
 
+/* personality quizzes */
+.based-on { font-size: 0.72rem; font-style: italic; }
+.result-chip { white-space: normal; max-width: 60%; }
+.persona-options { display: flex; flex-direction: column; gap: 8px; }
+.persona-options .quiz-option { min-height: 48px; justify-content: flex-start; text-align: left; }
+.persona-result { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; overflow: hidden; padding-top: 6px; }
+.persona-name { font-size: 1.5rem; text-transform: none; letter-spacing: 0; color: color-mix(in srgb, var(--theme) 65%, #3a2f33); margin: 0; animation: bump .6s .1s both; }
+.persona-bars { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.trait-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 10px; text-align: left; }
+.axis-row { display: grid; grid-template-columns: 18px 1fr 18px; align-items: center; gap: 8px; }
+.bar.axis { background: color-mix(in srgb, var(--theme) 25%, #fff); }
+.persona .bar > span { background: var(--theme); }
+.persona-reward { color: var(--coral-dark); }
+.trait-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.trait-chip { display: flex; flex-direction: column; padding: 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--theme) 14%, #fff); border: 2px solid color-mix(in srgb, var(--theme) 35%, #fff); }
+.trait-chip small { color: var(--muted); font-size: 0.72rem; }
+.toggle { cursor: pointer; font-size: 0.9rem; }
+.toggle input { width: auto; accent-color: var(--coral); }
+select { font: inherit; border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 10px 12px; }
+
 /* ---------------------------------------------------------------- phones */
 @media (max-width: 760px) {
   .room-card { min-width: 0; padding: 8px 12px; }
@@ -383,3 +403,4 @@ body.editing .bottom .chatbar { display: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+.play-card h3 { text-transform: none; letter-spacing: 0; color: var(--ink); font-size: 1.15rem; margin: 0; }

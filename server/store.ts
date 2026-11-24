@@ -18,6 +18,9 @@ export interface UserData {
   isNew: boolean;
   /** Recent reward timestamps per activity, for diminishing returns. */
   activity: Record<string, number[]>;
+  /** Personality quiz results (quiz id → outcome). Only the outcome is kept, never answers or birthdays. */
+  traits?: Record<string, string>;
+  traitsPublic?: boolean;
 }
 
 export interface UserRow {

@@ -7,6 +7,8 @@ import { app } from '../app';
 import { sfx } from '../audio';
 import { openMemory } from '../games/memory';
 import { openQuiz } from '../games/quiz';
+import { openPersona } from '../games/persona';
+import { outcomeLabel, PERSONA_FIRST_REWARD, PERSONA_QUIZZES } from '../../../shared/personality';
 import { net } from '../net';
 import { swatch, thumbInto } from '../render/thumbs';
 import { state } from '../state';
@@ -237,11 +239,34 @@ function buyButton(id: string, kind: 'item' | 'material', price: number, after: 
 }
 
 // ---------------------------------------------------------------- play menu
-export async function openPlay() {
-  const body = h('div', { class: 'stack' }, h('p', { class: 'muted-text' }, 'Earn pebbles to spend in the catalogue. Perfect runs unlock items you can’t buy.'));
+export async function openPlay(tab: 'games' | 'you' = 'games') {
+  const intro = h('p', { class: 'muted-text' });
+  const tabs = h('div', { class: 'tabs big' });
+  const body = h('div', { class: 'stack' }, tabs, intro);
   const m = modal('Play', body, { wide: true });
   const grid = h('div', { class: 'grid play-grid' });
   body.append(grid);
+  const setTabs = (on: 'games' | 'you') => tabs.replaceChildren(
+    h('button', { class: `tab ${on === 'games' ? 'on' : ''}`, onclick: () => { sfx.click(); m.close(); openPlay('games'); } }, 'Quizzes & games'),
+    h('button', { class: `tab ${on === 'you' ? 'on' : ''}`, onclick: () => { sfx.click(); m.close(); openPlay('you'); } }, 'About you'));
+  setTabs(tab);
+  if (tab === 'you') {
+    intro.textContent = 'Personality quizzes. No right answers: your result goes on your player card for visitors to see. 30 pebbles the first time you take each one.';
+    const traits = state.profile!.traits ?? {};
+    grid.append(...PERSONA_QUIZZES.map((q) => {
+      const have = traits[q.id];
+      return h('div', { class: 'play-card', style: { '--theme': q.colour } as any },
+        h('div', { class: 'play-kind' }, q.kind === 'birthday' ? 'Birthday · instant' : `Personality · ${q.questions.length} questions`),
+        h('h3', null, q.title),
+        h('p', null, q.blurb),
+        h('small', { class: 'muted-text based-on' }, q.basedOn),
+        h('div', { class: 'row between' },
+          have ? h('span', { class: 'chip small friend result-chip' }, outcomeLabel(q.id, have)) : h('small', null, h('b', null, `+${PERSONA_FIRST_REWARD}`), ' first time'),
+          btn(have ? 'Retake' : 'Start', () => { m.close(); openPersona(q); }, have ? 'ghost small' : 'primary')));
+    }));
+    return;
+  }
+  intro.textContent = 'Earn pebbles to spend in the catalogue. Perfect runs unlock items you can’t buy.';
   let quizzes: QuizMeta[] = [];
   try { quizzes = await net.request('quiz.list', {}); } catch (e) { toast((e as Error).message, 'warn'); }
   const p = state.profile!;

@@ -36,7 +36,7 @@ Environment variables: `PORT` (default 8787) and `DB_FILE` (default `data/pebble
 - **Decorate** (your own flat only): pick something from the drawer, and the ghost turns green where it fits and red where it doesn't. Click to place it. Click placed items to **Move**, **Turn** (R) or **Store** them (Delete). Small things (lamps, vases, plants) can stand on tables, and the floor and wall tabs swap materials. **Ctrl+Z** undoes the last change, including stores and material swaps.
 - **Visit** lists every flat, with who's in and who's a friend. **Friends** handles requests and has a "Join" button for friends who are out and about.
 - **Guestbook** is a pinboard per flat. Visitors pin notes and the owner can remove any of them.
-- **Play** has four quizzes and *Tide Pool Pairs*, a 90-second memory game.
+- **Play** has four trivia quizzes and *Tide Pool Pairs*, a 90-second memory game. Its **About you** tab has fifteen personality quizzes (below).
 - **Catalogue** sells by theme and shows your progress towards each set's bonus item.
 
 | Decorating: the ghost shows green where an item fits | The catalogue, with set progress |
@@ -154,6 +154,34 @@ Append to `QUIZZES` in `server/data/quizzes.ts`:
 
 The answer order is shuffled on every run. A perfect score grants `rewardItem` (or `rewardMaterial`) the first time, and 15 bonus pebbles after that. If the reward is earn-only, set the item's `source` to `{ type: 'quiz', id: 'space', label: 'Perfect score in Night Sky' }`.
 
+## Personality quizzes
+
+The **About you** tab has fifteen quizzes with no right answers. Each result appears on your player card for visitors to see, and you can hide them all with one switch on your own card. Each quiz pays 30 pebbles the first time and a token 5 (diminishing) on retakes, so there's a reason to try them all without a reason to grind.
+
+| Quiz | Sorts you into | Built on |
+| --- | --- | --- |
+| Four Letters | 16 four-letter types (E/I, S/N, T/F, J/P) | Jung's *Psychological Types* (1921) |
+| Nine Points | 9 types | The enneagram's nine types |
+| The Big Five | Openness, Conscientiousness, Extraversion, Agreeableness, Sensitivity (with bars) | Five-Factor Model |
+| Four Humours | Sanguine, choleric, melancholic, phlegmatic | Classical temperaments |
+| Four Styles | Direct, Inspiring, Steady, Careful | Marston's four behavioural styles (1928) |
+| Work Compass | Six interest types | Holland's RIASEC |
+| Conflict Style | Five ways of handling disagreement | Blake & Mouton's conflict grid |
+| Lark or Owl | Lark, hummingbird, owl | Chronotype research |
+| Social Battery | Introvert, ambivert, extrovert | Introversion–extraversion |
+| Star Sign | 12 sun signs, from month and day | Western zodiac |
+| Your Element | Earth, water, air, fire | Classical elements |
+| Which Set Are You? | The four Pebble Court themes | Original |
+| Which Houseplant? | Fern, cactus, monstera, ivy | Original |
+| What Kind of Guest? | Five sorts of visitor | Original |
+| Which Season? | Spring, summer, autumn, winter | Original |
+
+**On names and rights.** All questions and result names are written for this game. Where a quiz follows a known framework it uses the public idea and credits that, not a branded test: *Myers-Briggs*, *MBTI*, *DiSC*, *16Personalities*, *Keirsey* and *The 5 Love Languages* are trademarks with copyrighted questionnaires, so none of their names, type nicknames or items appear. (Love languages and the animal chronotypes were left out because they're too close to someone else's product.) This is a sensible line rather than legal advice.
+
+**Privacy.** Only the outcome key is stored (`traits` in the user's data). Answers aren't kept, and Star Sign never stores the birthday, only the sign. The server does the scoring (`submitPersona` in `server/activities.ts`), so results and rewards can't be invented on the client.
+
+**Adding one.** Append to `PERSONA_QUIZZES` in `shared/personality.ts`. Use `pick(question, [text, outcomeKey], …)` for one-point choices, or `agree(statement, trait, reversed?)` for a four-point "that's me / not me" scale. Set `kind: 'top'` (highest score wins; ties go to the outcome picked most recently) or `kind: 'axes'` with letter pairs (keep an odd number of questions per axis so there are no ties), and `showBars: true` if the breakdown is interesting. `npm test` checks that every option points at a real outcome and that every outcome can actually be reached.
+
 ## Adding a theme
 
 1. Add the id to `ThemeId` in `shared/types.ts`.
@@ -168,7 +196,7 @@ Follow `server/activities.ts` (Tide Pool Pairs). Keep the game's state on the se
 
 ## What's in this version, and what isn't
 
-In: accounts, a starter flat and furniture, full decorating (grid snapping, rotation, collision, one level of stacking, wall items, floor and wall materials, undo), live presence, movement and chat for any number of players in a room, emotes and sitting, guestbooks, friends, a directory, access settings, the safety tools above, four quizzes, one minigame, a 40-item and 12-material catalogue across four themes with set bonuses, and phone support (tap to walk, pinch to zoom, touch-sized controls).
+In: accounts, a starter flat and furniture, full decorating (grid snapping, rotation, collision, one level of stacking, wall items, floor and wall materials, undo), live presence, movement and chat for any number of players in a room, emotes and sitting, guestbooks, friends, a directory, access settings, the safety tools above, four trivia quizzes, fifteen personality quizzes, one minigame, a 40-item and 12-material catalogue across four themes with set bonuses, and phone support (tap to walk, pinch to zoom, touch-sized controls).
 
 Not yet:
 
