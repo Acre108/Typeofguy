@@ -1,0 +1,32 @@
+{
+  "name": "pebble-court",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A cosy browser-based social game: chat, visit, decorate your apartment and earn furniture through quizzes and minigames.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "tsx watch --clear-screen=false server/index.ts",
+    "dev:client": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@fontsource/nunito": "5.1.0",
+    "three": "0.170.0",
+    "tsx": "4.19.2",
+    "ws": "8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.1",
+    "@types/three": "0.170.0",
+    "@types/ws": "8.5.13",
+    "typescript": "5.7.2",
+    "vite": "6.0.3"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}
